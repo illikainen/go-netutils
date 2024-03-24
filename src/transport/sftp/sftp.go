@@ -3,6 +3,7 @@ package sftp
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"os/user"
@@ -19,6 +20,7 @@ import (
 	"github.com/pkg/sftp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/term"
 )
@@ -263,6 +265,19 @@ func getAuthMethods(uri *url.URL) ([]ssh.AuthMethod, error) {
 	if ok {
 		log.Debug("using password authentication")
 		return []ssh.AuthMethod{ssh.Password(password)}, nil
+	}
+
+	authSock := os.Getenv("SSH_AUTH_SOCK")
+	if authSock != "" {
+		log.Debugf("using pubkey authentication with ssh-agent (%s)", authSock)
+
+		conn, err := net.Dial("unix", authSock)
+		if err != nil {
+			return nil, err
+		}
+
+		client := agent.NewClient(conn)
+		return []ssh.AuthMethod{ssh.PublicKeysCallback(client.Signers)}, nil
 	}
 
 	identityMethods := []ssh.AuthMethod{}
