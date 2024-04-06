@@ -8,6 +8,8 @@ import (
 	"github.com/illikainen/go-netutils/src/transport/types"
 
 	"github.com/illikainen/go-utils/src/iofs"
+	"github.com/illikainen/go-utils/src/sandbox"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,7 +28,23 @@ func (t *Transport) Close() error {
 func (t *Transport) Exists(remote string) (bool, error) {
 	log.Tracef("%s: check %s", t.uri.Scheme, remote)
 
-	return iofs.Exists(remote)
+	stat, err := os.Stat(remote)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// Checking the file size is an ugly workaround to deal with the
+	// bubblewrap sandbox.  Files must exist before they can be mounted in
+	// a sandboxed subprocess.  When Exists() is invoked in a sandbox, the
+	// `remote` will have been created by the parent process, so we can't
+	// rely solely on ENOENT.
+	if sandbox.IsSandboxed() {
+		return stat.Size() != 0, nil
+	}
+	return true, nil
 }
 
 func (t *Transport) Open(remote string) (io.ReadCloser, error) {
