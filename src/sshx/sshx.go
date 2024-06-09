@@ -2,6 +2,7 @@ package sshx
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/user"
@@ -9,7 +10,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/illikainen/go-utils/src/errorx"
 	"github.com/illikainen/go-utils/src/iofs"
+	"github.com/illikainen/go-utils/src/process"
 	"github.com/kevinburke/ssh_config"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
@@ -18,6 +21,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/term"
 )
 
@@ -252,6 +256,112 @@ func getHostKeyAlgorithms(alias string) ([]string, error) {
 	}
 
 	return algos, nil
+}
+
+type ExecOptions struct {
+	Command string
+	Become  string
+	Stdin   io.Reader
+	Stdout  process.OutputFunc
+	Stderr  process.OutputFunc
+}
+
+type ExecOutput struct {
+	Stdout []byte
+	Stderr []byte
+}
+
+// NOTE: preventing command injections is the responsibility of the caller.
+func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
+	session, err := c.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	session.Stdin = opts.Stdin
+
+	out = &ExecOutput{}
+	group := errgroup.Group{}
+
+	stdoutPipe, err := session.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	stdoutFunc := opts.Stdout
+	if stdoutFunc == nil {
+		stdoutFunc = process.CaptureOutput
+	}
+
+	group.Go(func() error {
+		out.Stdout, err = stdoutFunc(stdoutPipe, process.Stdout)
+		return err
+	})
+
+	stderrPipe, err := session.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	stderrFunc := opts.Stderr
+	if stderrFunc == nil {
+		stderrFunc = process.CaptureOutput
+	}
+
+	group.Go(func() error {
+		out.Stderr, err = stderrFunc(stderrPipe, process.Stderr)
+		return err
+	})
+
+	cmd := opts.Command
+	if opts.Become != "" {
+		esc, err := c.become(opts.Become)
+		if err != nil {
+			return nil, err
+		}
+
+		cmd = fmt.Sprintf("%s %s", esc, cmd)
+	}
+	log.Tracef("%s: exec: %s", c.alias, cmd)
+
+	err = session.Start(opts.Command)
+	if err != nil {
+		// XXX: what to do with the goroutine errgroup here?
+		return nil, err
+	}
+
+	err = group.Wait()
+	if err != nil {
+		return nil, errorx.Join(err, session.Wait())
+	}
+
+	err = session.Wait()
+	if err != nil {
+		if len(out.Stderr) > 0 {
+			return nil, errors.Errorf("%s", out.Stderr)
+		}
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func (c *Client) become(username string) (cmd string, err error) {
+	session, err := c.NewSession()
+	if err != nil {
+		return "", err
+	}
+
+	err = session.Run("command -v sudo")
+	if err == nil {
+		return fmt.Sprintf("sudo -u '%s'", username), nil
+	}
+
+	err = session.Run("command -v doas")
+	if err == nil {
+		return fmt.Sprintf("doas -u '%s'", username), nil
+	}
+
+	return "", errors.Errorf("unable to find a suitable program to change privileges")
 }
 
 func (c *Client) NewSFTPClient() (*sftp.Client, error) {
