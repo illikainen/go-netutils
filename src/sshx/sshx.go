@@ -199,7 +199,7 @@ func getAuthMethods(alias string, password string) ([]ssh.AuthMethod, error) {
 		return nil, err
 	}
 
-	pass, err := term.ReadPassword(syscall.Stdin)
+	pass, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return nil, err
 	}
