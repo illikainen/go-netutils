@@ -28,6 +28,7 @@ type ClientConfig struct {
 
 type Client struct {
 	*ssh.Client
+	alias string
 }
 
 func Dial(network string, alias string, config *ClientConfig) (*Client, error) {
@@ -83,7 +84,10 @@ func Dial(network string, alias string, config *ClientConfig) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{client}, nil
+	return &Client{
+		Client: client,
+		alias:  alias,
+	}, nil
 }
 
 func getAddr(alias string) (string, error) {
