@@ -258,6 +258,10 @@ func (c *Client) NewSFTPClient() (*sftp.Client, error) {
 	return sftp.NewClient(c.Client)
 }
 
+func (c *Client) Close() error {
+	return c.Client.Close()
+}
+
 func SandboxPaths() (ro []string, rw []string, err error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
