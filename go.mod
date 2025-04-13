@@ -9,7 +9,6 @@ require (
 	github.com/pkg/sftp v1.13.5
 	github.com/samber/lo v1.37.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.17.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/term v0.15.0
