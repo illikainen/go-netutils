@@ -47,7 +47,7 @@ func (t *Transport) Open(remote string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	log.Infof("%s: open %s", uri.Scheme, uri)
+	log.Tracef("%s: open %s", uri.Scheme, uri)
 
 	resp, err := http.Get(uri.String())
 	if err != nil {
@@ -63,7 +63,7 @@ func (t *Transport) Download(remote string, local string) (err error) {
 		return err
 	}
 
-	log.Infof("http: download %s", uri)
+	log.Tracef("http: download %s", uri)
 
 	resp, err := http.Get(uri.String())
 	if err != nil {

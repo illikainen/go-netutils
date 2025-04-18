@@ -89,7 +89,7 @@ func (t *Transport) Open(remote string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	log.Infof("%s: open %s", uri.Scheme, uri)
+	log.Tracef("%s: open %s", uri.Scheme, uri)
 
 	f, err := t.client.Open(remote)
 	if err != nil {
@@ -109,7 +109,7 @@ func (t *Transport) Download(remote string, local string) (err error) {
 		return err
 	}
 
-	log.Infof("%s: download %s", uri.Scheme, uri)
+	log.Tracef("%s: download %s", uri.Scheme, uri)
 
 	remotef, err := t.client.Open(remote)
 	if err != nil {
@@ -142,7 +142,7 @@ func (t *Transport) Upload(remote string, local string) (err error) {
 		return err
 	}
 
-	log.Infof("%s: upload %s", uri.Scheme, uri)
+	log.Tracef("%s: upload %s", uri.Scheme, uri)
 
 	f, err := t.client.Create(remote)
 	if err != nil {
