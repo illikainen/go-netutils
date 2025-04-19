@@ -10,6 +10,7 @@ import (
 	"github.com/illikainen/go-netutils/src/transport/types"
 
 	"github.com/illikainen/go-utils/src/errorx"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,22 +55,22 @@ func (t *Transport) Open(remote string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	return resp.Body, nil
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return resp.Body, nil
+	case http.StatusNotFound:
+		return nil, errors.Wrap(types.ErrNotExist, remote)
+	}
+
+	return nil, errors.Wrap(types.ErrUnknown, remote)
 }
 
 func (t *Transport) Download(remote string, local string) (err error) {
-	uri, err := t.uri.Parse(remote)
+	remotef, err := t.Open(remote)
 	if err != nil {
 		return err
 	}
-
-	log.Tracef("http: download %s", uri)
-
-	resp, err := http.Get(uri.String())
-	if err != nil {
-		return err
-	}
-	defer errorx.Defer(resp.Body.Close, &err)
+	defer errorx.Defer(remotef.Close, &err)
 
 	localf, err := os.Create(local) // #nosec G304
 	if err != nil {
@@ -77,7 +78,7 @@ func (t *Transport) Download(remote string, local string) (err error) {
 	}
 	defer errorx.Defer(localf.Close, &err)
 
-	_, err = io.Copy(localf, resp.Body)
+	_, err = io.Copy(localf, remotef)
 	if err != nil {
 		return err
 	}

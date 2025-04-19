@@ -93,25 +93,16 @@ func (t *Transport) Open(remote string) (io.ReadCloser, error) {
 
 	f, err := t.client.Open(remote)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, errors.Wrap(types.ErrNotExist, remote)
+		}
 		return nil, err
 	}
 	return f, err
 }
 
 func (t *Transport) Download(remote string, local string) (err error) {
-	remote, err = t.expand(remote)
-	if err != nil {
-		return err
-	}
-
-	uri, err := t.uri.Parse(remote)
-	if err != nil {
-		return err
-	}
-
-	log.Tracef("%s: download %s", uri.Scheme, uri)
-
-	remotef, err := t.client.Open(remote)
+	remotef, err := t.Open(remote)
 	if err != nil {
 		return err
 	}

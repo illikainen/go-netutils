@@ -50,13 +50,25 @@ func (t *Transport) Exists(remote string) (bool, error) {
 func (t *Transport) Open(remote string) (io.ReadCloser, error) {
 	log.Tracef("%s: open %s", t.uri.Scheme, remote)
 
-	return os.Open(remote) // #nosec G304
+	f, err := os.Open(remote) // #nosec G304
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, errors.Wrap(types.ErrNotExist, remote)
+		}
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (t *Transport) Download(remote string, local string) error {
 	log.Tracef("%s: download %s", t.uri.Scheme, remote)
 
-	return iofs.Copy(local, remote)
+	err := iofs.Copy(local, remote)
+	if errors.Is(err, os.ErrNotExist) {
+		return errors.Wrap(types.ErrNotExist, remote)
+	}
+	return err
 }
 
 func (t *Transport) Upload(remote string, local string) error {

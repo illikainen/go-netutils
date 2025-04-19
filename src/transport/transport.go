@@ -11,6 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrUnsupportedScheme = types.ErrUnsupportedScheme
+	ErrNotExist          = types.ErrNotExist
+	ErrUnknown           = types.ErrUnknown
+)
+
 type Transport = types.Transport
 
 func New(uri *url.URL) (Transport, error) {
@@ -23,5 +29,5 @@ func New(uri *url.URL) (Transport, error) {
 		return http.New(uri)
 	}
 
-	return nil, errors.Wrap(types.ErrUnsupportedScheme, uri.Scheme)
+	return nil, errors.Wrap(ErrUnsupportedScheme, uri.Scheme)
 }

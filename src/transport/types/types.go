@@ -15,4 +15,8 @@ type Transport interface {
 	String() string
 }
 
-var ErrUnsupportedScheme = errors.New("unsupported url scheme")
+var (
+	ErrUnsupportedScheme = errors.New("unsupported url scheme")
+	ErrNotExist          = errors.New("file does not exist")
+	ErrUnknown           = errors.New("unknown error")
+)
