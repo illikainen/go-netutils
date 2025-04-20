@@ -264,6 +264,7 @@ type ExecOptions struct {
 	Stdin   io.Reader
 	Stdout  process.OutputFunc
 	Stderr  process.OutputFunc
+	Trusted bool
 }
 
 type ExecOutput struct {
@@ -293,7 +294,7 @@ func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
 	}
 
 	group.Go(func() error {
-		out.Stdout, err = stdoutFunc(stdoutPipe, process.Stdout)
+		out.Stdout, err = stdoutFunc(stdoutPipe, process.Stdout, opts.Trusted)
 		return err
 	})
 
@@ -308,7 +309,7 @@ func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
 	}
 
 	group.Go(func() error {
-		out.Stderr, err = stderrFunc(stderrPipe, process.Stderr)
+		out.Stderr, err = stderrFunc(stderrPipe, process.Stderr, opts.Trusted)
 		return err
 	})
 
