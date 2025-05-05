@@ -3,7 +3,7 @@ module github.com/illikainen/go-netutils
 go 1.19
 
 require (
-	github.com/illikainen/go-utils v0.0.0
+	github.com/illikainen/go-utils v0.0.0-20250505121911-a2d2eb85064b
 	github.com/kevinburke/ssh_config v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
@@ -23,5 +23,3 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/illikainen/go-utils => ../go-utils
