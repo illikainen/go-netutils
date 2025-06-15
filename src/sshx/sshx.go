@@ -13,10 +13,10 @@ import (
 	"github.com/illikainen/go-utils/src/errorx"
 	"github.com/illikainen/go-utils/src/iofs"
 	"github.com/illikainen/go-utils/src/process"
+	"github.com/illikainen/go-utils/src/seq"
 	"github.com/kevinburke/ssh_config"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
@@ -398,7 +398,7 @@ func SandboxPaths() (ro []string, rw []string, err error) {
 	}
 	ro = append(ro, strings.Split(globalHostValue, " ")...)
 
-	return lo.Filter(ro, func(path string, _ int) bool {
+	return seq.FilterBy(ro, func(path string, _ int) bool {
 		return path != ""
 	}), nil, nil
 }
