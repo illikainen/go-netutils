@@ -324,7 +324,7 @@ func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
 	}
 	log.Tracef("%s: exec: %s", c.alias, cmd)
 
-	err = session.Start(opts.Command)
+	err = session.Start(cmd)
 	if err != nil {
 		// XXX: what to do with the goroutine errgroup here?
 		return nil, err
