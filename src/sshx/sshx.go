@@ -315,7 +315,7 @@ func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
 
 	cmd := opts.Command
 	if opts.Become != "" {
-		esc, err := c.become(opts.Become)
+		esc, err := c.Become(opts.Become)
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +346,7 @@ func (c *Client) Exec(opts *ExecOptions) (out *ExecOutput, err error) {
 	return out, nil
 }
 
-func (c *Client) become(username string) (cmd string, err error) {
+func (c *Client) Become(username string) (cmd string, err error) {
 	session, err := c.NewSession()
 	if err != nil {
 		return "", err
