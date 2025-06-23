@@ -29,5 +29,5 @@ func New(uri *url.URL) (Transport, error) {
 		return http.New(uri)
 	}
 
-	return nil, errors.Wrap(ErrUnsupportedScheme, uri.Scheme)
+	return nil, errors.Wrap(ErrUnsupportedScheme, uri.String())
 }
